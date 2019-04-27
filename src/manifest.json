@@ -26,7 +26,7 @@
   } ],
   "version" : "1.0.0",
   "releaseNotes" : "Initial release, just includes exporting Colors and Styles",
-  "name" : "Xamarin.Forms Exporter",
+  "name" : "Xamarin Forms Exporter",
   "host" : {
     "app" : "XD",
     "minVersion" : "13.0"
