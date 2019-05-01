@@ -7,7 +7,7 @@ Adobe XD Plugin to export assets to Xamarin.Forms XAML Styles and Resources.
 ## Demo
 
 1. Select `Plugins -> Xamarin.Forms Exporter`
-2. Plugin will copy color assets and character style assets to clipboard
+2. A preview will open displaying the XAML resources.  You can either just select and copy some of the resources from the preview, or go ahead and hit `Copy` to copy all the resources to your clipboard
 3. Paste into your resource dictionary in a XAML file
 
 ![usage](/design/Usage.gif)
