@@ -2,7 +2,7 @@
   "summary" : "Export Color & Styles",
   "website" : "https://github.com/kphillpotts/XDtoXF",
   "keywords" : [ "Xamarin", "Xamarin.Forms", "Export", "XAML", "Styles", "Resources" ],
-  "languages" : [ "en"],
+  "languages" : ["en"],
   "author" : "Kym Phillpotts",
   "description" : "Export your Color and Character Styles in XAML ready for Xamarin.Forms.",
   "helpUrl" : "https://github.com/kphillpotts/XDtoXF/blob/master/README.md",
@@ -24,8 +24,8 @@
     "width" : 192,
     "height" : 192
   } ],
-  "version" : "1.0.0",
-  "releaseNotes" : "Initial release, just includes exporting Colors and Styles",
+  "version" : "1.1.0",
+  "releaseNotes" : "Added dialog to show preview of Color and Character Style resources.",
   "name" : "Xamarin Forms Exporter",
   "host" : {
     "app" : "XD",
