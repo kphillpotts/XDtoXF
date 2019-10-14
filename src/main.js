@@ -133,7 +133,7 @@ function getColors() {
               </h1>
               <hr/>
               <p>Here are the Colors and Character Styles defined in the Assets of your project.</p>
-              <textarea id="resources" readonly="true" value='` + colors + `' height=400></textarea>
+              <textarea id="resources" readonly="true" height=400>` + colors + `</textarea>
               <hr/>
               <p>You can manually copy the resources you need from the text area above, or just hit Copy button below to copy all resources to the clipboard.</p>
               <hr/>            
