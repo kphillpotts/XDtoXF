@@ -54,7 +54,7 @@ function createResources(fonts, colors, styles)
 
 function findColorStyle(fillHexColor, colorsCollection) {
     // Loop over all colors in Assets, if the colour we want is defined, reference it
-    for (var i = 0; i < colorsCollection.length; i++) 
+    for (let i = 0; i < colorsCollection.length; i++) 
     {
       // get color hex value
       let newColor = convertTo('hex', colorsCollection[i]['color']['value']);
@@ -62,7 +62,7 @@ function findColorStyle(fillHexColor, colorsCollection) {
       if(newColor == fillHexColor)
       {
         // get color name or create one
-        var colorName = (colorsCollection[i]['name'] == undefined) ? "Color" + i : colorsCollection[i]['name'];
+        let colorName = (colorsCollection[i]['name'] == undefined) ? "Color" + i : colorsCollection[i]['name'];
         colorName = replaceSpaces(colorName);
         let resourceColorName = "{StaticResource " + colorName + "}";
         //isResourceColor = true;
@@ -74,18 +74,19 @@ function findColorStyle(fillHexColor, colorsCollection) {
 
 function getFontStyles()
 {
-  var assets = require("assets"),
-  allStyles = assets.characterStyles.get();
+  let assets = require("assets");
+  let allCharacterStyles = assets.characterStyles.get();
 
   let fontCollection = [];
   let fontCollectionIndex = 0;
 
-  for (var i = 0; i < allStyles.length; i++)
+  for (let i = 0; i < allCharacterStyles.length; i++)
   {
     // get the style information
-    let charStyle = allStyles[i]['style'];
+    let charStyle = allCharacterStyles[i]['style'];
 
     let concatFont = charStyle["fontFamily"] + "-" + charStyle["fontStyle"];
+    concatFont = replaceSpaces(concatFont);
     
     let fontDef = "";
     fontDef += "<OnPlatform x:Key=\"" + concatFont + "\" x:TypeArguments=\"x:String\">\r\n"; 
@@ -93,7 +94,7 @@ function getFontStyles()
     fontDef += "\t<On Platform=\"iOS\" Value=\"" + concatFont + " />\r\n"; 
     fontDef += "</OnPlatform>\r\n"; 
 
-    var found = fontCollection.find(function(element) { 
+    let found = fontCollection.find(function(element) { 
       return element.resourceKey == concatFont; 
     }); 
 
@@ -104,24 +105,23 @@ function getFontStyles()
         xamarinResource: fontDef
       }
     }
-
-    return fontCollection;
   }
+  return fontCollection;
 }
 
 function getCharacterAssets(fonts)
 {
-  var assets = require("assets"),
-  allStyles = assets.characterStyles.get();
+  let assets = require("assets");
+  let allStyles = assets.characterStyles.get();
 
   let allColors = assets.colors.get();
 
   let styles = "";
 
-  for (var i = 0; i < allStyles.length; i++)
+  for (let i = 0; i < allStyles.length; i++)
   {
     // get style name or create one
-    var styleName = (allStyles[i]['name'] == undefined) ? "Style" + i : allStyles[i]['name'];
+    let styleName = (allStyles[i]['name'] == undefined) ? "Style" + i : allStyles[i]['name'];
     styleName = replaceSpaces(styleName);
 
     // get the style information
@@ -131,9 +131,10 @@ function getCharacterAssets(fonts)
     
     let resourceColorName = findColorStyle(fillHexColor, allColors);
 
-    let fontConcat = charStyle["fontFamily"] + "-" + charStyle["fontStyle"];
+    let concatFont = charStyle["fontFamily"] + "-" + charStyle["fontStyle"];
+    concatFont = replaceSpaces(concatFont);
     let font = fonts.find(function(element) { 
-      if(element.resourceKey == fontConcat) {
+      if(element.resourceKey == concatFont) {
         return element;
       } 
     });
@@ -152,19 +153,19 @@ function getCharacterAssets(fonts)
 }
 
 function getColors() {
-    var assets = require("assets"),
-    allColors = assets.colors.get();
+    let assets = require("assets");
+    let allColors = assets.colors.get();
   
     let colors = "";
 
     // Loop over all colors in Assets and concetenate to string
-    for (var i = 0; i < allColors.length; i++) 
+    for (let i = 0; i < allColors.length; i++) 
     {
       // get color hex value
       let newColor = convertTo('hex', allColors[i]['color']['value']);
 
       // get color name or create one
-      var colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
+      let colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
       colorName = replaceSpaces(colorName);
 
       // create resource string
@@ -254,7 +255,7 @@ function getColors() {
   }
 
   function handleSubmit(e, dialog, resources) {
-    var clipText = resources.value;
+    let clipText = resources.value;
 
     let clipboard = require("clipboard");
     clipboard.copyText(clipText);
@@ -267,22 +268,23 @@ function getColors() {
 
   function fontsToString(fonts) {
     let fontsString = "";
-    console.log(fonts);
-    for (var i = 0; i < fonts.length; i++) {
-      //console.log(fonts[i]);
-      console.log(fonts[i].resourceKey);
-      console.log(fonts[i].xamarinResource);
+
+    for (let i = 0; i < fonts.length; i++) {
       fontsString += fonts[i].xamarinResource;
+    }
+
+    if(fontsString.length > 0) {
+      fontsString += "\r\n";
     }
     return fontsString
   }
 
 async function myPluginCommand(selection) {
   // get the colors and character assets
-  var colors = getColors();
-  var fontsCollection = getFontStyles();
-  var fonts = fontsToString(fontsCollection);
-  var styles = getCharacterAssets(fontsCollection);
+  let colors = getColors();
+  let fontsCollection = getFontStyles();
+  let fonts = fontsToString(fontsCollection);
+  let styles = getCharacterAssets(fontsCollection);
 
   if (colors.length == 0 && styles.length==0)
   {
@@ -290,7 +292,7 @@ async function myPluginCommand(selection) {
   }
   else
   {
-    var outputText = createResources(fonts, colors, styles);
+    let outputText = createResources(fonts, colors, styles);
     const dialog = getDialog(outputText);
     const result = await dialog.showModal();
     dialog.remove();
