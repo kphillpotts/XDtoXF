@@ -7,6 +7,10 @@ const { alert, error } = require("./lib/dialogs.js");
 const shell = require("uxp").shell;
 var {Rectangle, Color} = require("scenegraph");
 
+function replaceSpaces(string) {
+  return string.replace(/ /g,"");
+}
+
 function convertTo(format, color) {
     if(format == 'hex')
     {
@@ -41,36 +45,62 @@ function createResources(colors, styles)
   return stringToCopy;
 }
 
+function findColorStyle(fillHexColor, colorsCollection) {
+    // Loop over all colors in Assets, if the colour we want is defined, reference it
+    for (var i = 0; i < colorsCollection.length; i++) 
+    {
+      // get color hex value
+      let newColor = convertTo('hex', colorsCollection[i]['color']['value']);
+
+      if(newColor == fillHexColor)
+      {
+        // get color name or create one
+        var colorName = (colorsCollection[i]['name'] == undefined) ? "Color" + i : colorsCollection[i]['name'];
+        colorName = replaceSpaces(colorName);
+        let resourceColorName = "{StaticResource " + colorName + "}";
+        //isResourceColor = true;
+        return resourceColorName;
+      }
+    }
+    return null;
+}
+
 function getCharacterAssets()
 {
   var assets = require("assets"),
   allStyles = assets.characterStyles.get();
+
+  let allColors = assets.colors.get();
 
   let styles = "";
 
   for (var i = 0; i < allStyles.length; i++)
   {
     // get style name or create one
-    let styleName = (allStyles[i]['name'] == undefined) ? "Style" + i : allStyles[i]['name'];
+    var styleName = (allStyles[i]['name'] == undefined) ? "Style" + i : allStyles[i]['name'];
+    styleName = replaceSpaces(styleName);
 
     // get the style information
     let charStyle = allStyles[i]['style'];
+
+    let fillHexColor = charStyle["fill"].toHex(true);
+    
+    let resourceColorName = findColorStyle(fillHexColor, allColors);
 
     // create the style entry
     let styleDef = "";
     styleDef += "<Style x:Key=\"" + styleName + "\" TargetType=\"Label\">\r\n";
     styleDef += "\t<Setter Property=\"FontFamily\" Value=\"" + charStyle["fontFamily"] + "\"/>\r\n"; 
     styleDef += "\t<Setter Property=\"FontSize\" Value=\"" + charStyle["fontSize"] + "\"/>\r\n"; 
-    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + charStyle["fill"].toHex(true) + "\"/>\r\n"; 
+    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + (resourceColorName !== null ? resourceColorName : fillHexColor) + "\"/>\r\n"; 
     styleDef += "</Style>\r\n\r\n";
-   
+    console.log(styleDef);
     styles +=styleDef;
   }
   return styles;
 }
 
 function getColors() {
-
     var assets = require("assets"),
     allColors = assets.colors.get();
   
@@ -83,7 +113,8 @@ function getColors() {
       let newColor = convertTo('hex', allColors[i]['color']['value']);
 
       // get color name or create one
-      let colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
+      var colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
+      colorName = replaceSpaces(colorName);
 
       // create resource string
       colors += "<Color x:Key=\"" + colorName + "\">" + newColor + "</Color>\r\n";
@@ -105,7 +136,6 @@ function getColors() {
   }
   
   function createDialog(colors) {
-
     document.body.innerHTML = `
       <style>
           form {
@@ -123,6 +153,7 @@ function getColors() {
             height: 24px;
             overflow: hidden;
         }
+      }
       </style>
       <dialog>
           <form method="dialog">
@@ -133,7 +164,7 @@ function getColors() {
               </h1>
               <hr/>
               <p>Here are the Colors and Character Styles defined in the Assets of your project.</p>
-              <textarea id="resources" readonly="true" value='` + colors + `' height=400></textarea>
+              <textarea id="resources" readonly="true" height=400>` + colors + `</textarea>
               <hr/>
               <p>You can manually copy the resources you need from the text area above, or just hit Copy button below to copy all resources to the clipboard.</p>
               <hr/>            
@@ -154,7 +185,7 @@ function getColors() {
       "#ok",
       "#resources"
     ].map(s => document.querySelector(s));
-  
+
     //// Add event handlers
     // Close dialog when cancel is clicked.
     // Note that XD handles the ESC key for you, also returning `reasonCanceled`
@@ -172,7 +203,6 @@ function getColors() {
   }
 
   function handleSubmit(e, dialog, resources) {
-
     var clipText = resources.value;
 
     let clipboard = require("clipboard");
