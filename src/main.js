@@ -45,6 +45,26 @@ function createResources(colors, styles)
   return stringToCopy;
 }
 
+function findColorStyle(fillHexColor, colorsCollection) {
+    // Loop over all colors in Assets, if the colour we want is defined, reference it
+    for (var i = 0; i < colorsCollection.length; i++) 
+    {
+      // get color hex value
+      let newColor = convertTo('hex', colorsCollection[i]['color']['value']);
+
+      if(newColor == fillHexColor)
+      {
+        // get color name or create one
+        var colorName = (colorsCollection[i]['name'] == undefined) ? "Color" + i : colorsCollection[i]['name'];
+        colorName = replaceSpaces(colorName);
+        let resourceColorName = "{StaticResource " + colorName + "}";
+        //isResourceColor = true;
+        return resourceColorName;
+      }
+    }
+    return null;
+}
+
 function getCharacterAssets()
 {
   var assets = require("assets"),
@@ -65,44 +85,22 @@ function getCharacterAssets()
 
     let fillHexColor = charStyle["fill"].toHex(true);
     
-    var resourceColorName;
-    let isResourceColor = false;
-    // Loop over all colors in Assets, if the colour we want is defined, reference it
-    for (var i = 0; i < allColors.length; i++) 
-    {
-      // get color hex value
-      let newColor = convertTo('hex', allColors[i]['color']['value']);
-
-      //if(allColors[i]['color'] == charStyle["fill"])
-      if(newColor == fillHexColor)
-      {
-        //console.log(charStyle["fill"] );
-        //console.log(allColors[i]['color']);
-
-        // get color name or create one
-        var colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
-        colorName = replaceSpaces(colorName);
-        resourceColorName = "{StaticResource " + colorName + "}";
-        isResourceColor = true;
-        break;
-      }
-    }
+    let resourceColorName = findColorStyle(fillHexColor, allColors);
 
     // create the style entry
     let styleDef = "";
     styleDef += "<Style x:Key=\"" + styleName + "\" TargetType=\"Label\">\r\n";
     styleDef += "\t<Setter Property=\"FontFamily\" Value=\"" + charStyle["fontFamily"] + "\"/>\r\n"; 
     styleDef += "\t<Setter Property=\"FontSize\" Value=\"" + charStyle["fontSize"] + "\"/>\r\n"; 
-    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + (isResourceColor ? resourceColorName : fillHexColor) + "\"/>\r\n"; 
+    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + (resourceColorName !== null ? resourceColorName : fillHexColor) + "\"/>\r\n"; 
     styleDef += "</Style>\r\n\r\n";
-   
+    console.log(styleDef);
     styles +=styleDef;
   }
   return styles;
 }
 
 function getColors() {
-
     var assets = require("assets"),
     allColors = assets.colors.get();
   
@@ -138,7 +136,6 @@ function getColors() {
   }
   
   function createDialog(colors) {
-
     document.body.innerHTML = `
       <style>
           form {
@@ -156,6 +153,7 @@ function getColors() {
             height: 24px;
             overflow: hidden;
         }
+      }
       </style>
       <dialog>
           <form method="dialog">
@@ -187,7 +185,7 @@ function getColors() {
       "#ok",
       "#resources"
     ].map(s => document.querySelector(s));
-  
+
     //// Add event handlers
     // Close dialog when cancel is clicked.
     // Note that XD handles the ESC key for you, also returning `reasonCanceled`
@@ -205,7 +203,6 @@ function getColors() {
   }
 
   function handleSubmit(e, dialog, resources) {
-
     var clipText = resources.value;
 
     let clipboard = require("clipboard");
