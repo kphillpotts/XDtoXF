@@ -50,6 +50,8 @@ function getCharacterAssets()
   var assets = require("assets"),
   allStyles = assets.characterStyles.get();
 
+  let allColors = assets.colors.get();
+
   let styles = "";
 
   for (var i = 0; i < allStyles.length; i++)
@@ -61,12 +63,37 @@ function getCharacterAssets()
     // get the style information
     let charStyle = allStyles[i]['style'];
 
+    let fillHexColor = charStyle["fill"].toHex(true);
+    
+    var resourceColorName;
+    let isResourceColor = false;
+    // Loop over all colors in Assets, if the colour we want is defined, reference it
+    for (var i = 0; i < allColors.length; i++) 
+    {
+      // get color hex value
+      let newColor = convertTo('hex', allColors[i]['color']['value']);
+
+      //if(allColors[i]['color'] == charStyle["fill"])
+      if(newColor == fillHexColor)
+      {
+        //console.log(charStyle["fill"] );
+        //console.log(allColors[i]['color']);
+
+        // get color name or create one
+        var colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
+        colorName = replaceSpaces(colorName);
+        resourceColorName = "{StaticResource " + colorName + "}";
+        isResourceColor = true;
+        break;
+      }
+    }
+
     // create the style entry
     let styleDef = "";
     styleDef += "<Style x:Key=\"" + styleName + "\" TargetType=\"Label\">\r\n";
     styleDef += "\t<Setter Property=\"FontFamily\" Value=\"" + charStyle["fontFamily"] + "\"/>\r\n"; 
     styleDef += "\t<Setter Property=\"FontSize\" Value=\"" + charStyle["fontSize"] + "\"/>\r\n"; 
-    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + charStyle["fill"].toHex(true) + "\"/>\r\n"; 
+    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + (isResourceColor ? resourceColorName : fillHexColor) + "\"/>\r\n"; 
     styleDef += "</Style>\r\n\r\n";
    
     styles +=styleDef;
