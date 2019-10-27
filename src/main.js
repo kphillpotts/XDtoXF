@@ -7,6 +7,10 @@ const { alert, error } = require("./lib/dialogs.js");
 const shell = require("uxp").shell;
 var {Rectangle, Color} = require("scenegraph");
 
+function replaceSpaces(string) {
+  return string.replace(/ /g,"");
+}
+
 function convertTo(format, color) {
     if(format == 'hex')
     {
@@ -18,9 +22,16 @@ function convertTo(format, color) {
     }
   }
 
-function createResources(colors, styles)
+function createResources(fonts, colors, styles)
 {
   let stringToCopy = "";
+
+  // copy fonts if they exist
+  if (fonts.length > 0)
+  {
+    stringToCopy += "<!-- Fonts -->\r\n"
+    stringToCopy += fonts;
+  }
 
   // copy colors if they exist
   if (colors.length > 0)
@@ -41,49 +52,121 @@ function createResources(colors, styles)
   return stringToCopy;
 }
 
-function getCharacterAssets()
+function findColorStyle(fillHexColor, colorsCollection) {
+    // Loop over all colors in Assets, if the colour we want is defined, reference it
+    for (let i = 0; i < colorsCollection.length; i++) 
+    {
+      // get color hex value
+      let newColor = convertTo('hex', colorsCollection[i]['color']['value']);
+
+      if(newColor == fillHexColor)
+      {
+        // get color name or create one
+        let colorName = (colorsCollection[i]['name'] == undefined) ? "Color" + i : colorsCollection[i]['name'];
+        colorName = replaceSpaces(colorName);
+        let resourceColorName = "{StaticResource " + colorName + "}";
+        //isResourceColor = true;
+        return resourceColorName;
+      }
+    }
+    return null;
+}
+
+function getFontStyles()
 {
-  var assets = require("assets"),
-  allStyles = assets.characterStyles.get();
+  let assets = require("assets");
+  let allCharacterStyles = assets.characterStyles.get();
+
+  let fontCollection = [];
+  let fontCollectionIndex = 0;
+
+  for (let i = 0; i < allCharacterStyles.length; i++)
+  {
+    // get the style information
+    let charStyle = allCharacterStyles[i]['style'];
+
+    let concatFont = charStyle["fontFamily"] + "-" + charStyle["fontStyle"];
+    concatFont = replaceSpaces(concatFont);
+    
+    let fontDef = "";
+    fontDef += "<OnPlatform x:Key=\"" + concatFont + "\" x:TypeArguments=\"x:String\">\r\n"; 
+    fontDef += "\t<On Platform=\"Android\" Value=\"" + concatFont + ".ttf#" + concatFont + "\" />\r\n"; 
+    fontDef += "\t<On Platform=\"iOS\" Value=\"" + concatFont + "\" />\r\n"; 
+    fontDef += "</OnPlatform>\r\n"; 
+
+    let found = fontCollection.find(function(element) { 
+      return element.resourceKey == concatFont; 
+    }); 
+
+    if(!found) {
+      fontCollection[fontCollectionIndex++] = {
+        resourceKey: concatFont,
+        xamarinResourceReference: "{StaticResource " + concatFont + "}",
+        xamarinResource: fontDef
+      }
+    }
+  }
+  return fontCollection;
+}
+
+function getCharacterAssets(fonts)
+{
+  let assets = require("assets");
+  let allStyles = assets.characterStyles.get();
+
+  let allColors = assets.colors.get();
 
   let styles = "";
 
-  for (var i = 0; i < allStyles.length; i++)
+  for (let i = 0; i < allStyles.length; i++)
   {
     // get style name or create one
     let styleName = (allStyles[i]['name'] == undefined) ? "Style" + i : allStyles[i]['name'];
+    styleName = replaceSpaces(styleName);
 
     // get the style information
     let charStyle = allStyles[i]['style'];
 
+    let fillHexColor = charStyle["fill"].toHex(true);
+    
+    let resourceColorName = findColorStyle(fillHexColor, allColors);
+
+    let concatFont = charStyle["fontFamily"] + "-" + charStyle["fontStyle"];
+    concatFont = replaceSpaces(concatFont);
+    let font = fonts.find(function(element) { 
+      if(element.resourceKey == concatFont) {
+        return element;
+      } 
+    });
+
     // create the style entry
     let styleDef = "";
     styleDef += "<Style x:Key=\"" + styleName + "\" TargetType=\"Label\">\r\n";
-    styleDef += "\t<Setter Property=\"FontFamily\" Value=\"" + charStyle["fontFamily"] + "\"/>\r\n"; 
+    styleDef += "\t<Setter Property=\"FontFamily\" Value=\"" + (font !== null && font !== undefined ? font.xamarinResourceReference : charStyle["fontFamily"]) + "\"/>\r\n"; 
     styleDef += "\t<Setter Property=\"FontSize\" Value=\"" + charStyle["fontSize"] + "\"/>\r\n"; 
-    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + charStyle["fill"].toHex(true) + "\"/>\r\n"; 
+    styleDef += "\t<Setter Property=\"TextColor\" Value=\"" + (resourceColorName !== null ? resourceColorName : fillHexColor) + "\"/>\r\n"; 
     styleDef += "</Style>\r\n\r\n";
-   
+    
     styles +=styleDef;
   }
   return styles;
 }
 
 function getColors() {
-
-    var assets = require("assets"),
-    allColors = assets.colors.get();
+    let assets = require("assets");
+    let allColors = assets.colors.get();
   
     let colors = "";
 
     // Loop over all colors in Assets and concetenate to string
-    for (var i = 0; i < allColors.length; i++) 
+    for (let i = 0; i < allColors.length; i++) 
     {
       // get color hex value
       let newColor = convertTo('hex', allColors[i]['color']['value']);
 
       // get color name or create one
       let colorName = (allColors[i]['name'] == undefined) ? "Color" + i : allColors[i]['name'];
+      colorName = replaceSpaces(colorName);
 
       // create resource string
       colors += "<Color x:Key=\"" + colorName + "\">" + newColor + "</Color>\r\n";
@@ -105,7 +188,6 @@ function getColors() {
   }
   
   function createDialog(colors) {
-
     document.body.innerHTML = `
       <style>
           form {
@@ -123,6 +205,7 @@ function getColors() {
             height: 24px;
             overflow: hidden;
         }
+      }
       </style>
       <dialog>
           <form method="dialog">
@@ -133,7 +216,7 @@ function getColors() {
               </h1>
               <hr/>
               <p>Here are the Colors and Character Styles defined in the Assets of your project.</p>
-              <textarea id="resources" readonly="true" value='` + colors + `' height=400></textarea>
+              <textarea id="resources" readonly="true" height=400>` + colors + `</textarea>
               <hr/>
               <p>You can manually copy the resources you need from the text area above, or just hit Copy button below to copy all resources to the clipboard.</p>
               <hr/>            
@@ -154,7 +237,7 @@ function getColors() {
       "#ok",
       "#resources"
     ].map(s => document.querySelector(s));
-  
+
     //// Add event handlers
     // Close dialog when cancel is clicked.
     // Note that XD handles the ESC key for you, also returning `reasonCanceled`
@@ -172,8 +255,7 @@ function getColors() {
   }
 
   function handleSubmit(e, dialog, resources) {
-
-    var clipText = resources.value;
+    let clipText = resources.value;
 
     let clipboard = require("clipboard");
     clipboard.copyText(clipText);
@@ -184,10 +266,25 @@ function getColors() {
     e.preventDefault();
   }
 
+  function fontsToString(fonts) {
+    let fontsString = "";
+
+    for (let i = 0; i < fonts.length; i++) {
+      fontsString += fonts[i].xamarinResource;
+    }
+
+    if(fontsString.length > 0) {
+      fontsString += "\r\n";
+    }
+    return fontsString
+  }
+
 async function myPluginCommand(selection) {
   // get the colors and character assets
-  var colors = getColors();
-  var styles = getCharacterAssets();
+  let colors = getColors();
+  let fontsCollection = getFontStyles();
+  let fonts = fontsToString(fontsCollection);
+  let styles = getCharacterAssets(fontsCollection);
 
   if (colors.length == 0 && styles.length==0)
   {
@@ -195,7 +292,7 @@ async function myPluginCommand(selection) {
   }
   else
   {
-    var outputText = createResources(colors, styles);
+    let outputText = createResources(fonts, colors, styles);
     const dialog = getDialog(outputText);
     const result = await dialog.showModal();
     dialog.remove();
