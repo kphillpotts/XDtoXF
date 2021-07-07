@@ -190,14 +190,14 @@ function getColors() {
   function createDialog(colors) {
     document.body.innerHTML = `
       <style>
-          form {
-              width: 600px;
-          }
-          .h1 {
-            align-items: center;
-            justify-content: space-between;
-            display: flex;
-            flex-direction: row;
+        form {
+            width: 600px;
+        }
+        .h1 {
+          align-items: center;
+          justify-content: space-between;
+          display: flex;
+          flex-direction: row;
         }
         .icon {
             border-radius: 4px;
@@ -205,7 +205,6 @@ function getColors() {
             height: 24px;
             overflow: hidden;
         }
-      }
       </style>
       <dialog>
           <form method="dialog">
