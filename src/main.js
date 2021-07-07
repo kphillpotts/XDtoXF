@@ -92,6 +92,7 @@ function getFontStyles()
     fontDef += "<OnPlatform x:Key=\"" + concatFont + "\" x:TypeArguments=\"x:String\">\r\n"; 
     fontDef += "\t<On Platform=\"Android\" Value=\"" + concatFont + ".ttf#" + concatFont + "\" />\r\n"; 
     fontDef += "\t<On Platform=\"iOS\" Value=\"" + concatFont + "\" />\r\n"; 
+    fontDef += "\t<On Platform=\"UWP\" Value=\"" + concatFont + ".ttf#" + concatFont + "\" />\r\n"; 
     fontDef += "</OnPlatform>\r\n"; 
 
     let found = fontCollection.find(function(element) { 
